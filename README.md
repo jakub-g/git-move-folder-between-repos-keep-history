@@ -6,8 +6,9 @@ Move folder from one git repo to another, with full history.
 Check the `.sh` file. You don't need advanced bash skills. Basically you should:
 
 1. Copy this file to a handy place (outside of the repos you modify)
-2. Modify the variables the top of the file 
-3. Run the `.sh` file and let it do the magic
+2. Modify the variables the top of the file
+3. Make sure the repos modified are in clean state (`git status`)
+4. Run the `.sh` file and let it do the magic
 
 Note that the script will go over each commit in git history one by one, so it may take a while to complete on huge repos (progress is logged though on each commit).
 
