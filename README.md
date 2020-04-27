@@ -1,5 +1,8 @@
 # git-move-folder
+
 Move folder from one git repo to another, with full history.
+
+*Note: git sha1-s are not preserved after migration (it's not possible in general case; the script recreates git commits, filtering out the changes done outside of the folder being moved)
 
 # Usage
 
