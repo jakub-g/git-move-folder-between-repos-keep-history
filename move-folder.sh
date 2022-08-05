@@ -1,101 +1,98 @@
 #!/bin/bash
 
-# Copy a folder from one git repo to another git repo,
-# preserving full history of the folder.
+# Starting point: https://github.com/jakub-g/git-move-folder-between-repos-keep-history 
+# forked in https://github.com/tetractius/git-move-folder-between-repos-keep-history
+# Using argparse python-like from https://github.com/nhoffman/argparse-bash
 
-SRC_GIT_REPO='/d/git-experimental/your-old-webapp'
-DST_GIT_REPO='/d/git-experimental/your-new-webapp'
-SRC_BRANCH_NAME='master'
-DST_BRANCH_NAME='import-stuff-from-old-webapp'
-# Most likely you want the REWRITE_FROM and REWRITE_TO to have a trailing slash!
-REWRITE_FROM='app/src/main/static/'
-REWRITE_TO='app/src/main/static/'
+ARGPARSE_DESCRIPTION="Copy a folder from one git repo to another git repo, preserving full history of the folder."
+source $(dirname $0)/argparse.bash || exit 1
+argparse "$@" <<EOF || exit 1 
+parser.add_argument('-s', '--local-src-git-repo', type=str,
+                    help='Path to the root of the local git repo to import', 
+                    required=True)
+parser.add_argument('-d', '--local-dst-git-repo', type=str,
+                    help='Path to the root of the local destination git repo', 
+                    required=True)
+parser.add_argument('-sbr', '--source-branch', type=str,
+                    help='Branch source name to import from', 
+                    required=True)
+parser.add_argument('-dbr', '--destination-branch', type=str,
+                    help='Branch destination name to import to', 
+                    required=True)
+parser.add_argument('-nstp', '--new-subtree-path', type=str,
+                    help='Subtree path relative to the root of the destination repo', 
+                    required=True)
+EOF
+
+
+# NEW_SUBTREE_PATH must have a trailing slash.
+if [[ "${NEW_SUBTREE_PATH}" != */ ]]; 
+then
+  NEW_SUBTREE_PATH=${NEW_SUBTREE_PATH}/
+  echo "Adding trailing slash NEW_SUBTREE_PATH=${NEW_SUBTREE_PATH}"
+fi
 
 verifyPreconditions() {
-    #echo 'Checking if SRC_GIT_REPO is a git repo...' &&
-      { test -d "${SRC_GIT_REPO}/.git" || { echo "Fatal: SRC_GIT_REPO is not a git repo"; exit; } } &&
-    #echo 'Checking if DST_GIT_REPO is a git repo...' &&
-      { test -d "${DST_GIT_REPO}/.git" || { echo "Fatal: DST_GIT_REPO is not a git repo"; exit; } } &&
-    #echo 'Checking if REWRITE_FROM is not empty...' &&
-      { test -n "${REWRITE_FROM}" || { echo "Fatal: REWRITE_FROM is empty"; exit; } } &&
-    #echo 'Checking if REWRITE_TO is not empty...' &&
-      { test -n "${REWRITE_TO}" || { echo "Fatal: REWRITE_TO is empty"; exit; } } &&
-    #echo 'Checking if REWRITE_FROM folder exists in SRC_GIT_REPO' &&
-      { test -d "${SRC_GIT_REPO}/${REWRITE_FROM}" || { echo "Fatal: REWRITE_FROM does not exist inside SRC_GIT_REPO"; exit; } } &&
-    #echo 'Checking if SRC_GIT_REPO has a branch SRC_BRANCH_NAME' &&
-      { cd "${SRC_GIT_REPO}"; git rev-parse --verify "${SRC_BRANCH_NAME}" || { echo "Fatal: SRC_BRANCH_NAME does not exist inside SRC_GIT_REPO"; exit; } } &&
-    #echo 'Checking if DST_GIT_REPO has a branch DST_BRANCH_NAME' &&
-      { cd "${DST_GIT_REPO}"; git rev-parse --verify "${DST_BRANCH_NAME}" || { echo "Fatal: DST_BRANCH_NAME does not exist inside DST_GIT_REPO"; exit; } } &&
+    #echo 'Checking if LOCAL_SRC_GIT_REPO is a git repo...' &&
+      { test -d "${LOCAL_SRC_GIT_REPO}/.git" || { echo "Fatal: LOCAL_SRC_GIT_REPO is not a git repo"; exit; } } &&
+    #echo 'Checking if LOCAL_DST_GIT_REPO is a git repo...' &&
+      { test -d "${LOCAL_DST_GIT_REPO}/.git" || { echo "Fatal: LOCAL_DST_GIT_REPO is not a git repo"; exit; } } &&
+    #echo 'Checking if NEW_SUBTREE_PATH is not empty...' &&
+      { test -n "${NEW_SUBTREE_PATH}" || { echo "Fatal: NEW_SUBTREE_PATH is empty"; exit; } } &&
+    #echo 'Checking if LOCAL_SRC_GIT_REPO has a branch SOURCE_BRANCH' &&
+      { cd "${LOCAL_SRC_GIT_REPO}"; git rev-parse --verify "${SOURCE_BRANCH}" || { echo "Fatal: SOURCE_BRANCH does not exist inside LOCAL_SRC_GIT_REPO"; exit; } } &&
+    #echo 'Checking if LOCAL_DST_GIT_REPO has a branch DESTINATION_BRANCH' &&
+      { cd "${LOCAL_DST_GIT_REPO}"; git rev-parse --verify "${DESTINATION_BRANCH}" || { echo "Fatal: DESTINATION_BRANCH does not exist inside LOCAL_DST_GIT_REPO"; exit; } } &&
     echo '[OK] All preconditions met'
 }
 
-# Import folder from one git repo to another git repo, including full history.
+# Import full git repo to another git repo in a subdirectory, including full history.
 #
-# Internally, it rewrites the history of the src repo (by creating
-# a temporary orphaned branch; isolating all the files from REWRITE_FROM path
-# to the root of the repo, commit by commit; and rewriting them again
-# to the original path).
+# Internally, it rewrites the history of the src repo by adding a prefix path
+# of desired subfolder.
 #
 # Then it creates another temporary branch in the dest repo,
 # fetches the commits from the rewritten src repo, and does a merge.
 #
 # Before any work is done, all the preconditions are verified: all folders
-# and branches must exist (except REWRITE_TO folder in dest repo, which
+# and branches must exist (except NEW_SUBTREE folder in dest repo, which
 # can exist, but does not have to).
 #
 # The code should work reasonably on repos with reasonable git history.
 # I did not test pathological cases, like folder being created, deleted,
 # created again etc. but probably it will work fine in that case too.
 #
-# In case you realize something went wrong, you should be able to reverse
-# the changes by calling `undoImportFolderFromAnotherGitRepo` function.
-# However, to be safe, please back up your repos just in case, before running
-# the script. `git filter-branch` is a powerful but dangerous command.
-importFolderFromAnotherGitRepo(){
-    SED_COMMAND='s-\t\"*-\t'${REWRITE_TO}'-'
+# In case you realize something went wrong, destroy all you local repo,
+# fix this script and start again
+
+importFolderFromAnotherGitRepo() {
 
     verifyPreconditions &&
-    cd "${SRC_GIT_REPO}" &&
-      echo "Current working directory: ${SRC_GIT_REPO}" &&
-      git checkout "${SRC_BRANCH_NAME}" &&
+    pushd "${LOCAL_SRC_GIT_REPO}" &&
+      echo "Current working directory: ${LOCAL_SRC_GIT_REPO}" &&
+      git checkout "${SOURCE_BRANCH}" &&
       echo 'Backing up current branch as FILTER_BRANCH_BACKUP' &&
       git branch -f FILTER_BRANCH_BACKUP &&
-      SRC_BRANCH_NAME_EXPORTED="${SRC_BRANCH_NAME}-exported" &&
-      echo "Creating temporary branch '${SRC_BRANCH_NAME_EXPORTED}'..." &&
-      git checkout -b "${SRC_BRANCH_NAME_EXPORTED}" &&
-      echo 'Rewriting history, step 1/2...' &&
-      git filter-branch -f --prune-empty --subdirectory-filter ${REWRITE_FROM} &&
-      echo 'Rewriting history, step 2/2...' &&
-      git filter-branch -f --index-filter \
-       "git ls-files -s | sed \"$SED_COMMAND\" |
-        GIT_INDEX_FILE=\$GIT_INDEX_FILE.new git update-index --index-info &&
-        mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" HEAD &&
-    cd - &&
-    cd "${DST_GIT_REPO}" &&
-      echo "Current working directory: ${DST_GIT_REPO}" &&
-      echo "Adding git remote pointing to SRC_GIT_REPO..." &&
-      git remote add old-repo ${SRC_GIT_REPO} &&
-      echo "Fetching from SRC_GIT_REPO..." &&
-      git fetch old-repo "${SRC_BRANCH_NAME_EXPORTED}" &&
-      echo "Checking out DST_BRANCH_NAME..." &&
-      git checkout "${DST_BRANCH_NAME}" &&
-      echo "Merging SRC_GIT_REPO/" &&
-      git merge "old-repo/${SRC_BRANCH_NAME}-exported" --no-commit &&
-    cd -
-}
-
-# If something didn't work as you'd expect, you can undo, tune the params, and try again
-undoImportFolderFromAnotherGitRepo(){
-  cd "${SRC_GIT_REPO}" &&
-    SRC_BRANCH_NAME_EXPORTED="${SRC_BRANCH_NAME}-exported" &&
-    git checkout "${SRC_BRANCH_NAME}" &&
-    git branch -D "${SRC_BRANCH_NAME_EXPORTED}" &&
-  cd - &&
-  cd "${DST_GIT_REPO}" &&
-    git remote rm old-repo &&
-    git merge --abort
-  cd -
+      SOURCE_BRANCH_EXPORTED="${SOURCE_BRANCH}-exported" &&
+      echo "Creating temporary branch '${SOURCE_BRANCH_EXPORTED}'..." &&
+      git checkout -b "${SOURCE_BRANCH_EXPORTED}" &&
+      
+      echo 'Rewriting history...' &&
+      git filter-repo -f --prune-empty auto --path-rename :${NEW_SUBTREE_PATH} &&
+      echo '...done'
+    popd &&
+    
+    pushd "${LOCAL_DST_GIT_REPO}" &&
+      echo "Current working directory: ${LOCAL_DST_GIT_REPO}" &&
+      echo "Adding git remote pointing to LOCAL_SRC_GIT_REPO..." &&
+      git remote add old-repo ${LOCAL_SRC_GIT_REPO} &&
+      echo "Fetching from LOCAL_SRC_GIT_REPO..." &&
+      git fetch old-repo "${SOURCE_BRANCH_EXPORTED}" &&
+      echo "Checking out DESTINATION_BRANCH..." &&
+      git checkout "${DESTINATION_BRANCH}" &&
+      echo "Merging LOCAL_SRC_GIT_REPO/" &&
+      git merge "old-repo/${SOURCE_BRANCH}-exported" --allow-unrelated-histories --no-commit &&
+    popd 
 }
 
 importFolderFromAnotherGitRepo
-#undoImportFolderFromAnotherGitRepo
