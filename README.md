@@ -1,26 +1,37 @@
 # git-move-folder
 
-Move folder from one git repo to another, with full history.
+Import repo into a subfolder of another one and keep the graph of snapshots
 
-*Note: git sha1-s are not preserved after migration (it's not possible in general case; before merging code from one repo to another, the script recreates git commits, filtering out the changes done outside of the folder being moved)
+*Note: git sha1-s are not preserved after migration (it's not possible in general case; before merging code from one repo to another, the script recreates git commits, filtering out the changes done outside of the folder being moved)*
 
 # Usage
 
-Check the `.sh` file. You don't need advanced bash skills. Basically you should:
+Clone the repo and run the help:
 
-1. Copy this file to a handy place (outside of the repos you modify)
-2. Modify the variables the top of the file
-3. Make sure the repos modified are in clean state (`git status`)
-4. Run the `.sh` file and let it do the magic
+```
+❯ ./move-folder.sh -h
+usage: move-folder.sh [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH
 
-Note that the script will go over each commit in git history one by one, so it may take a while to complete on huge repos (progress is logged though on each commit).
+Copy a folder from one git repo to another git repo, preserving full history of the folder.
 
-It is however optimized to skip the commits that do not touch the folder moved, so if the folder is just a small part of a huge repo, it should be relatively fast.
+optional arguments:
+  -h, --help            show this help message and exit
+  -s LOCAL_SRC_GIT_REPO, --local-src-git-repo LOCAL_SRC_GIT_REPO
+                        Path to the root of the local git repo to import
+  -d LOCAL_DST_GIT_REPO, --local-dst-git-repo LOCAL_DST_GIT_REPO
+                        Path to the root of the local destination git repo
+  -sbr SOURCE_BRANCH, --source-branch SOURCE_BRANCH
+                        Branch source name to import from
+  -dbr DESTINATION_BRANCH, --destination-branch DESTINATION_BRANCH
+                        Branch destination name to import to
+  -nstp NEW_SUBTREE_PATH, --new-subtree-path NEW_SUBTREE_PATH
+                        Subtree path relative to the root of the destination repo
+```
 
-If something goes wrong, you can comment out (with `#`, or just delete the line) the `importFolder...` method call at the end of the file,  uncomment the `undoImport...` method call, run the script to undo, then modify the params or the code itself, and rerun.
+The script uses the git filter-repo module. Check how to install it at: https://github.com/newren/git-filter-repo/blob/main/INSTALL.md
 
-Even if I put a lot of safety belts (`verifyPreconditions`) and an undo functionality , for extra safety, DO NOT RUN THIS SCRIPT ON YOUR ORIGINAL REPOS. Make full copies of the repos you want to play with before running the script - better safe than sorry. The script uses some dangerous git methods that rewrite repo history.
+DO NOT RUN THIS SCRIPT ON YOUR ORIGINAL REPOS. Make full copies of the repos you want to play with before running the script - better safe than sorry. The script uses some dangerous git methods that rewrite repo history.
 
 You've been warned :) Now back up your stuff and enjoy the script.
 
-If you liked it, [please upvote my StackOverflow answer](https://stackoverflow.com/a/47081782/245966).
+If you liked it, [please upvote the StackOverflow answer of the original author at](https://stackoverflow.com/a/47081782/245966).
