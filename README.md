@@ -8,11 +8,11 @@ Import repo into a subfolder of another one and keep the graph of snapshots
 
 Clone the repo and run the help:
 
-```
+```bash
 ❯ ./import-repo.sh -h
 usage: import-repo.sh [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH
 
-Copy a folder from one git repo to another git repo, preserving full history of the folder.
+Import a repository into a subfolder of another git repository, preserving full history source repository.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -25,7 +25,7 @@ optional arguments:
   -dbr DESTINATION_BRANCH, --destination-branch DESTINATION_BRANCH
                         Branch destination name to import to
   -nstp NEW_SUBTREE_PATH, --new-subtree-path NEW_SUBTREE_PATH
-                        Subtree path relative to the root of the destination repo
+                        Subtree path relative to the root of the destination rep
 ```
 
 The script uses the git filter-repo module. Check how to install it at: https://github.com/newren/git-filter-repo/blob/main/INSTALL.md

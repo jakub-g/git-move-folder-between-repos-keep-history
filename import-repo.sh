@@ -4,7 +4,7 @@
 # forked in https://github.com/tetractius/git-move-folder-between-repos-keep-history
 # Using argparse python-like from https://github.com/nhoffman/argparse-bash
 
-ARGPARSE_DESCRIPTION="Copy a folder from one git repo to another git repo, preserving full history of the folder."
+ARGPARSE_DESCRIPTION="Import a repository into a subfolder of another git repository, preserving full history source repository."
 source $(dirname $0)/argparse.bash || exit 1
 argparse "$@" <<EOF || exit 1 
 parser.add_argument('-s', '--local-src-git-repo', type=str,
