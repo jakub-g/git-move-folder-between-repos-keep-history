@@ -1,4 +1,4 @@
-# git-move-folder
+# git-impoort-repo
 
 Import repo into a subfolder of another one and keep the graph of snapshots
 
@@ -9,8 +9,8 @@ Import repo into a subfolder of another one and keep the graph of snapshots
 Clone the repo and run the help:
 
 ```
-❯ ./move-folder.sh -h
-usage: move-folder.sh [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH
+❯ ./import-repo.sh -h
+usage: import-repo.sh [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH
 
 Copy a folder from one git repo to another git repo, preserving full history of the folder.
 
