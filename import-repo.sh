@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Starting point: https://github.com/jakub-g/git-move-folder-between-repos-keep-history 
-# forked in https://github.com/tetractius/git-move-folder-between-repos-keep-history
+# forked in https://github.com/tetractius/git-import-repo-into-another-in-subfolder-and-keep-history
 # Using argparse python-like from https://github.com/nhoffman/argparse-bash
 
 ARGPARSE_DESCRIPTION="Import a repository into a subfolder of another git repository, preserving full history source repository."
