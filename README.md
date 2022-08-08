@@ -1,4 +1,4 @@
-# git-impoort-repo
+# git-import-repo
 
 Import repo into a subfolder of another one and keep the graph of snapshots
 
