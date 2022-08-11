@@ -40,8 +40,11 @@ If you like it, [please upvote the StackOverflow answer of the original author!!
 
 ## Support for LFS!!
 
-It also provides support for copying over all the LFS file of the source repo keeping all the history. In order to help the portability of this git feature however, it is necessary to export all the LFS file first.
+This script also provides support for copying over all the LFS file of the source repo keeping all the history. In order to help the portability of this git feature however, it is necessary to export all the LFS file first.
+
 This might take a considerable amount of time. Also after the migration the user is responsible for completing the merge first and them actually re-import the files as LFS.
+
 NOTE: git will already track the LFS files in the `.gitattribute` that is imported as well with all the history at `$LOCAL_DST_GIT_REPO/$NEW_SUBTREE_PATH/.gitattribute`. It responsibility of the user to decide if unify such file with the `$LOCAL_DST_GIT_REPO/.gitattribute` or keeping it separate. There are pro and cons in both approaches so the script by default doesn't try to over-do about it.
+
 Given that the exporting step in the source repo might take a long time, there is the possibility to let the script doing nothing about it by passing `--do-not-migrate-lfs`. Obviously this might create an inconsistent state so be sure to know what you are doing.
 
