@@ -8,13 +8,13 @@ Import repo into a subfolder of another one and keep the graph of snapshots.
 
 Clone the repo and run the help:
 
-```bash
-❯ ./import-repo.sh -h
-usage: import-repo.sh [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH [--do-not-migrate-lfs]
+```shell
+❯ ./git-import-repo -h
+usage: git-import-repo [-h] -s LOCAL_SRC_GIT_REPO -d LOCAL_DST_GIT_REPO -sbr SOURCE_BRANCH -dbr DESTINATION_BRANCH -nstp NEW_SUBTREE_PATH [--do-not-migrate-lfs]
 
 Import a repository into a subfolder of another git repository, preserving full history source repository.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -s LOCAL_SRC_GIT_REPO, --local-src-git-repo LOCAL_SRC_GIT_REPO
                         Path to the root of the local git repo to import
@@ -26,8 +26,8 @@ optional arguments:
                         Branch destination name to import to
   -nstp NEW_SUBTREE_PATH, --new-subtree-path NEW_SUBTREE_PATH
                         Subtree path relative to the root of the destination repo
-  --do-not-migrate-lfs  if lfs files are detected, those will be exported in source repo and re-imported in target repo. The operation might take a long time. Use this flag to avoid
-                        this process and deal with LFS manually later. Be sure to know what you are doing if you use this flag!
+  --do-not-migrate-lfs  if lfs files are detected, those will be exported in source repo and re-imported in target repo. The operation might take a long time. Use this flag
+                        to avoid this process and deal with LFS manually later. Be sure to know what you are doing if you use this flag!
 ```
 
 The script uses the git filter-repo module. Check how to install it at: https://github.com/newren/git-filter-repo/blob/main/INSTALL.md
@@ -37,6 +37,9 @@ DO NOT RUN THIS SCRIPT ON YOUR ORIGINAL REPOS. Make full copies of the repos you
 You've been warned :) Now back up your stuff and enjoy the script.
 
 If you like it, [please upvote the StackOverflow answer of the original author!!](https://stackoverflow.com/a/47081782/245966).
+
+## Install it as git custom command
+Just copy `git-import-repo` or create symboc link in `PATH` and then you can simply run: `git import-repo -h`
 
 ## Support for LFS!!
 
