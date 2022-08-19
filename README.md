@@ -41,6 +41,12 @@ If you like it, [please upvote the StackOverflow answer of the original author!!
 ## Install it as git custom command
 Just copy `git-import-repo` or create symboc link in `PATH` and then you can simply run: `git import-repo -h`
 
+## Caveat
+It would more safe to run this tool while operating on a case sensitive file system (i.e. _ext4_ or _APFS (Case-sensitive)_). The reason is that `git-filter-repo` will fail when trying index refs that have insensitive equal string names. 
+This has been noticed for example, for refs that are referencing usernames that used different casing in different moment in time (maybe when pushing changes from NTFS/APFS and from ext4).
+
+Another solution proposed is to `git config --unset core.ignoreCase` before to use the tool and `git config core.ignoreCase true` afterwards as proposed [here](https://github.com/newren/git-filter-repo/issues/24#issuecomment-559540052), however this solution has not been tested extensively.
+
 ## Support for LFS!!
 
 This script also provides support for copying over all the LFS file of the source repo keeping all the history. In order to help the portability of this git feature however, it is necessary to export all the LFS file first.
