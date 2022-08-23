@@ -173,15 +173,16 @@ importFolderFromAnotherGitRepo() {
     pushd "${LOCAL_DST_GIT_REPO}" &&
       echo "-- Current working directory: ${LOCAL_DST_GIT_REPO}" &&
       echo "-- Adding git remote pointing to '${LOCAL_SRC_GIT_REPO}'..." &&
-      git remote add old-repo ${LOCAL_SRC_GIT_REPO} &&
+      OLD_REPO=old-repo-`cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-10} | head -n 1`
+      git remote add ${OLD_REPO} ${LOCAL_SRC_GIT_REPO} &&
       echo "-- Fetching from ${LOCAL_SRC_GIT_REPO}..." &&
-      git fetch old-repo "${SOURCE_BRANCH_EXPORTED}" &&
+      git fetch ${OLD_REPO} "${SOURCE_BRANCH_EXPORTED}" &&
       echo "-- Checking out ${DESTINATION_BRANCH} branch..." &&
       git checkout "${DESTINATION_BRANCH}" &&
       echo "-- Merging the following:" &&
       echo "-- Source repo - branch: ${LOCAL_SRC_GIT_REPO} - ${SOURCE_BRANCH}" &&
       echo "-- Target repo - branch: ${LOCAL_DST_GIT_REPO} - ${DESTINATION_BRANCH}" &&
-      git merge "old-repo/${SOURCE_BRANCH}-exported" --allow-unrelated-histories --no-commit 
+      git merge "${OLD_REPO}/${SOURCE_BRANCH}-exported" --allow-unrelated-histories --no-commit 
       echo ""
       echo "-- DONE!! Now check the ${LOCAL_DST_GIT_REPO} repo, adjust the final things and complete the process by doing 'git merge --continue'"
       if [[ "$THERE_ARE_LFS" == 1 && "$DO_NOT_MIGRATE_LFS" != "yes" ]]; 
