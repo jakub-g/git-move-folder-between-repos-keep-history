@@ -52,7 +52,7 @@ verifyPreconditions() {
 # However, to be safe, please back up your repos just in case, before running
 # the script. `git filter-branch` is a powerful but dangerous command.
 importFolderFromAnotherGitRepo(){
-    SED_COMMAND='s-\t\"*-\t'${REWRITE_TO}'-'
+    SED_COMMAND='s@\t\"*@\t'${REWRITE_TO}'@'
 
     verifyPreconditions &&
     cd "${SRC_GIT_REPO}" &&
@@ -80,7 +80,7 @@ importFolderFromAnotherGitRepo(){
       echo "Checking out DST_BRANCH_NAME..." &&
       git checkout "${DST_BRANCH_NAME}" &&
       echo "Merging SRC_GIT_REPO/" &&
-      git merge "old-repo/${SRC_BRANCH_NAME}-exported" --no-commit &&
+      git merge "old-repo/${SRC_BRANCH_NAME}-exported" --no-commit --allow-unrelated-histories &&
     cd -
 }
 
