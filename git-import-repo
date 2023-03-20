@@ -72,6 +72,9 @@ parser.add_argument('-sbr', '--source-branch', type=str,
 parser.add_argument('-dbr', '--destination-branch', type=str,
                     help='Branch destination name to import to', 
                     required=True)
+parser.add_argument('-ostp', '--old-subtree-path', type=str,
+                    help='Old Subtree path relative to the root of the source repo. Default is root of the repo', 
+                    required=False, default='')
 parser.add_argument('-nstp', '--new-subtree-path', type=str,
                     help='Subtree path relative to the root of the destination repo', 
                     required=True)
@@ -87,12 +90,20 @@ then
   echo "Adding trailing slash NEW_SUBTREE_PATH=${NEW_SUBTREE_PATH}"
 fi
 
+# OLD_SUBTREE_PATH must have a trailing slash unless it is empty (then it stays empty)
+if [[ "${OLD_SUBTREE_PATH}" != */ ]] && [[ "${OLD_SUBTREE_PATH}" != "" ]]; 
+then
+  OLD_SUBTREE_PATH=${OLD_SUBTREE_PATH}/
+  echo "Adding trailing slash OLD_SUBTREE_PATH=${OLD_SUBTREE_PATH}"
+else
+  OLD_SUBTREE_PATH=""
+fi
+
 verifyPreconditions() {
 
     echo "-- Checking if git-filter-repo is installed"
     [[ $(type -P "git-filter-repo") ]] && echo "git-filter-repo is available"  || 
-	        { echo "git-filter-repo is NOT available in PATH. Please refer to https://bit.ly/3bEmCVG
-			for installation instructions" 1>&2; exit 1; }
+	        { echo "git-filter-repo is NOT available in PATH. Please refer to https://bit.ly/3bEmCVG for installation instructions" 1>&2; exit 1; }
     echo "-- Checking if '${LOCAL_SRC_GIT_REPO}' is a git repo..." &&
       { test -d "${LOCAL_SRC_GIT_REPO}/.git" || { echo "Fatal: '${LOCAL_SRC_GIT_REPO}' is not a git repo"; exit; } } &&
     echo "-- Checking if '${LOCAL_SRC_GIT_REPO}' has LFS files..." &&
@@ -166,14 +177,14 @@ importFolderFromAnotherGitRepo() {
         git lfs migrate export --everything --include="*"
       fi
       echo "-- Rewriting history..." &&
-      git filter-repo -f --prune-empty auto --path-rename :${NEW_SUBTREE_PATH} &&
+      git filter-repo -f --prune-empty auto --path-rename ${OLD_SUBTREE_PATH}:${NEW_SUBTREE_PATH} &&
       echo "-- ...done"
     popd &&
     
     pushd "${LOCAL_DST_GIT_REPO}" &&
       echo "-- Current working directory: ${LOCAL_DST_GIT_REPO}" &&
       echo "-- Adding git remote pointing to '${LOCAL_SRC_GIT_REPO}'..." &&
-      OLD_REPO=old-repo-`cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-10} | head -n 1`
+      OLD_REPO=old-repo-`cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1`
       git remote add ${OLD_REPO} ${LOCAL_SRC_GIT_REPO} &&
       echo "-- Fetching from ${LOCAL_SRC_GIT_REPO}..." &&
       git fetch ${OLD_REPO} "${SOURCE_BRANCH_EXPORTED}" &&
