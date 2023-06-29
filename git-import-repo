@@ -168,13 +168,36 @@ importFolderFromAnotherGitRepo() {
       SOURCE_BRANCH_EXPORTED="${SOURCE_BRANCH}-exported" &&
       echo "-- Creating temporary branch '${SOURCE_BRANCH_EXPORTED}'..." &&
       git checkout -b "${SOURCE_BRANCH_EXPORTED}" &&
-      if [[ "$THERE_ARE_LFS" == 1 ]]; 
+      if [[ "$THERE_ARE_LFS" == 1 && "$DO_NOT_MIGRATE_LFS" != "yes" ]]; 
       then
-        echo "-- Saving the list of LFS files"
-        lfs_tmpfile=$(mktemp /tmp/import-repo-lfs-list.XXXXXX)
-        git lfs ls-files |  awk '{ s = ""; for (i = 3; i <= NF; i++) s = s $i " "; print s }' > $lfs_tmpfile
-        echo "-- Exporting back all the file from LFS. This might take awhile"
-        git lfs migrate export --everything --include="*"
+        echo "-- I found some LFS files. You need to push this first to the new server otherwise the migration will fails with the following error:"
+        echo "   [404] Object does not exist on the server or you don't have permissions to access it"
+        echo "-- In that case you can try the following:"
+        echo "--"
+        echo "# Go to the destination repo"
+        echo "cd $LOCAL_DST_GIT_REPO"
+        echo "# Get the the remote origin address with:"
+        echo "export NEW_ORIGIN=\`git remote get-url origin\`"
+        echo "# Then go to source repo"
+        echo "cd $LOCAL_SRC_GIT_REPO"
+        echo "# Fetch all LFS files from original origin"
+        echo "git lfs fetch --all origin"
+        echo "# Add the new-origin of the new server"
+        echo "git remote add new-origin \$NEW_ORIGIN"
+        echo "# Push the LFS files to the new-origin"
+        echo "git lfs push --all new-origin"
+        echo "--"
+        while true; do
+            read -p "Please confirm, you executed the above (yes/no): " yn
+            case $yn in 
+                yes ) echo "-- ok, we will proceed then";
+                    break;;
+                no ) echo "  !!! The migration will not work then. Sorry exiting :(  !!! "; 
+                    exit 1;;
+                * ) echo invalid response;;
+            esac
+        done
+
       fi
       echo "-- Rewriting history..." &&
       git filter-repo -f --prune-empty auto --path-rename ${OLD_SUBTREE_PATH}:${NEW_SUBTREE_PATH} &&
@@ -200,25 +223,18 @@ importFolderFromAnotherGitRepo() {
       then
         echo "" 
         echo "-------------------------------------------------------------------------------------------------------------" 
-        echo "-- ATTENTION!! The source branch had LFS. After you completed the merge with 'git merge --continue' you will"
-        echo "-- have to do the following step for ensuring that LFS are re-imported correctly."
+        echo "-- ATTENTION!! The source branch had LFS. Before you complete the merge with 'git merge --continue' you will"
+        echo "-- have to do double check the status of .gitattribute and verify that the LFS files you had in ${LOCAL_SRC_GIT_REPO}"
+        echo "-- are also present in ${LOCAL_DST_GIT_REPO}. This might be complex but for the most you can use 'git lfs ls-files --all'"
+        echo "-- "
         echo "-- (The LFS tracking for these files is still `realpath ${LOCAL_DST_GIT_REPO}/${NEW_SUBTREE_PATH}/.gitattribute.` "
         echo "-- You will have to decide if unifying those to the target repo `realpath ${LOCAL_DST_GIT_REPO}/.gitattribute`  "
         echo "-- or leaving those where they are, at a later stage according to you need)"
         echo "-- "
-        echo "-- Now I will generate a list of commands that you have to do to re-import LFS with the same history:"
         echo ""
-        cat $lfs_tmpfile | while read lfs_file_to_reimport;
-        do
-          # NOTE: without slashes because we added previously
-          # NOTE: the --no-rewrite is important because it just add a new migrated path
-          #       rather than trying to change a old outdated one
-          echo "git lfs migrate import --no-rewrite \"${NEW_SUBTREE_PATH}$lfs_file_to_reimport\""
-        done
-        echo "git lfs pull"
-        echo "git lfs ls-files --all"
         echo ""
         echo "-- After you can check the status with 'git lfs status' and/or 'git lfs ls-files --all' and/or 'git lfs track' and if you are happy you can commit those changes"
+        echo "-- that for most cases is runnning 'git merge --continue' from ${LOCAL_DST_GIT_REPO}"
       fi
       echo "-- May the odds be always in your favor!"
     popd 
